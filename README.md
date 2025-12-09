@@ -57,3 +57,42 @@
 ### VSCode + WSL Extension
 - Windows에서 VSCode를 그대로 사용하면서 WSL2 Linux 환경에서 편리하게 코드 작성, 터미널 사용 가능
 - 왼쪽 아래 `><`아이콘 - Open a Remote window - Connect to WSL 하면 WSL2 Ubuntu 환경의 VSCode가 실행됨
+
+## 관련 명령어
+- Linux 명령어
+    - 프로젝트 폴더 생성 및 파일 관련 명령어
+    | 명령어          | 소속        | 용도            | 예시                               |
+    | ------------ | --------- | ------------- | -------------------------------- |
+    | `mkdir`      | Linux/WSL | 새 폴더(디렉토리) 생성 | `mkdir ~/docker-test`            |
+    | `cd`         | Linux/WSL | 디렉토리 이동       | `cd ~/docker-test`               |
+    | `touch`      | Linux/WSL | 새 파일 생성       | `touch requirements.txt`         |
+    | `ls`         | Linux/WSL | 폴더 안 파일 목록 확인 | `ls -l`                          |
+    | `cp`         | Linux/WSL | 파일/폴더 복사      | `cp -r /mnt/c/... ~/docker-test` |
+    | `nano`/`vim` | Linux/WSL | 파일 편집         | `nano Dockerfile`                |
+- Dockerfile 작성 관련 명령어
+    - Dockerfile 안에서만 쓰는 명령어
+    | Dockerfile 명령어 | 소속         | 용도                 | 예시                                    |
+    | -------------- | ---------- | ------------------ | ------------------------------------- |
+    | `FROM`         | Dockerfile | 베이스 이미지 지정         | `FROM python:3.11-slim`               |
+    | `WORKDIR`      | Dockerfile | 컨테이너 내부 작업 디렉토리 설정 | `WORKDIR /app`                        |
+    | `COPY`         | Dockerfile | 파일을 컨테이너 내부로 복사    | `COPY app.py .`                       |
+    | `RUN`          | Dockerfile | 컨테이너 빌드 시 명령 실행    | `RUN pip install -r requirements.txt` |
+    | `CMD`          | Dockerfile | 컨테이너 실행 시 기본 명령 지정 | `CMD ["python", "app.py"]`            |
+- Docker 관련 명령어 (터미널에서 실행)
+    - 터미널에서 직접 실행하는 명령어는 Docker 소속
+    - WSL2 Linux 터미널에서 실행하면 Linux 환경에서 Docker CLI를 통해 컨테이너 관리 가능
+    | 명령어             | 소속         | 용도                   | 예시                                      |
+    | --------------- | ---------- | -------------------- | --------------------------------------- |
+    | `docker build`  | Docker CLI | Dockerfile 기반 이미지 빌드 | `docker build -t docker-test .`         |
+    | `docker images` | Docker CLI | 로컬 이미지 목록 확인         | `docker images`                         |
+    | `docker run`    | Docker CLI | 컨테이너 실행              | `docker run --rm docker-test`           |
+    | `docker login`  | Docker CLI | 레지스트리 로그인            | `docker login ghcr.io`                  |
+    | `docker push`   | Docker CLI | 이미지 업로드              | `docker push ghcr.io/<사용자>/docker-test` |
+- 전체 흐름 기준 명령어 요약
+    | 단계               | 명령어                                         | 소속         |
+    | ---------------- | ------------------------------------------- | ---------- |
+    | 프로젝트 폴더 생성       | `mkdir`, `cd`, `touch`                      | Linux/WSL  |
+    | 코드 작성            | `nano`, `vim`                               | Linux/WSL  |
+    | Dockerfile 작성    | `FROM`, `WORKDIR`, `COPY`, `RUN`, `CMD`     | Dockerfile |
+    | 이미지 빌드 & 컨테이너 실행 | `docker build`, `docker run`                | Docker CLI |
+    | 이미지 업로드          | `docker login`, `docker tag`, `docker push` | Docker CLI |
