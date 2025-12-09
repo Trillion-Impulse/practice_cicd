@@ -37,3 +37,23 @@
 - Image 빌드(build) → 이미지 생성
 - Container 실행(run) → 실제 프로그램 실행
 - Registry(GHCR, Docker Hub 등)에 push → 배포
+
+## 설치 및 준비
+
+### WSL2
+- Windows Subsystem for Linux 2
+- Windows 안에서 Linux 환경을 만들어주는 기능
+- 대부분의 서버와 컨테이너가 Linux 기반이므로, 실무 환경과 동일하게 테스트 가능
+
+### WSL2에 Ubuntu 설치
+- 실제 Linux 쉘 환경에서 터미널 명령어와 Python 실행 환경을 동일하게 사용하기 위해
+- Microsoft Store에서 Ubuntu 검색 후 설치
+- 사용자 이름 / 비밀번호는 Ubuntu 로그인, sudo 권한 등 Linux 환경 관리용
+
+### Docker Desktop 설치 및 WSL2 통합
+- Docker는 컨테이너를 만들고 실행하는 프로그램이며, Linux 환경에서 정상 동작
+- Windows에서 Docker Desktop을 실행하면, 컨테이너는 Linux 환경에서 동작
+
+### VSCode + WSL Extension
+- Windows에서 VSCode를 그대로 사용하면서 WSL2 Linux 환경에서 편리하게 코드 작성, 터미널 사용 가능
+- 왼쪽 아래 `><`아이콘 - Open a Remote window - Connect to WSL 하면 WSL2 Ubuntu 환경의 VSCode가 실행됨
