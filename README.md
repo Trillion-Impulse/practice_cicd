@@ -492,3 +492,150 @@
     - GHCR의 경우 리포지토리가 Private일 수 있으므로, GH_TOKEN과 권한 설정이 중요
     - 태그(:latest, :v1.0)를 잘 관리하면 버전별 배포가 편리
     - CI/CD에서는 자동 태그 + 자동 푸시를 설정하면 효율적
+
+# GitHub Container Registry(GHCR)
+- GitHub에서 제공하는 컨테이너 이미지 저장소(Container Registry)
+- Docker Hub와 비슷하지만, GitHub 계정 및 저장소와 밀접하게 연결되어 있음
+- 언제 사용하는가?
+    - 팀 프로젝트에서 이미지 버전을 GitHub와 함께 관리하고 싶을 때
+    - CI/CD(GitHub Actions)와 연동하여 자동 배포할 때
+    - 사내/비공개 이미지를 저장해야 할 때
+    - Docker Hub의 Pull 제한 문제를 피하고 싶을 때
+- 왜 사용하는가?
+    - GitHub 저장소와 자연스럽게 통합됨
+    - Private 공개 범위 조정 가능
+    - Pull token, 권한 제어가 더 세밀함
+    - GitHub Actions로 자동화하기 편함
+
+## GHCR 사용 전체 흐름
+- GHCR 사용 전체 흐름
+    ```
+    [1] Docker 이미지 빌드
+                ↓
+    [2] GitHub Token 생성 (Fine-grained)
+                ↓
+    [3] WSL2에서 GHCR 로그인
+                ↓
+    [4] GHCR 규칙에 맞게 이미지 태깅(tag)
+                ↓
+    [5] 이미지 Push (GHCR 업로드)
+                ↓
+    [6] 다른 환경에서 Pull & Run
+    ```
+
+## GHCR 사용 준비 - GitHub Token 생성
+- GHCR에 로그인하려면 GitHub Token이 필요함
+    - Docker는 GHCR에 push할 때 “GitHub Token을 사용한 인증”이 필요
+- GitHub Token은 두 종류가 존재
+- Fine-grained Token vs Classic Token
+    | 항목           | Fine-grained Tokens  | Tokens (Classic) |
+    | ------------ | -------------------- | ---------------- |
+    | 보안           | **매우 안전** (최소 권한 부여) | 위험 (계정 전체 권한 부여) |
+    | 권한 설정        | 저장소별, 패키지별 세밀한 제어    | 전체 패키지 권한 일괄     |
+    | GitHub 권장 여부 | **공식 권장**            | 점진적 폐지 예정        |
+    | 만료           | 반드시 설정               | 영구 가능            |
+    | 사용 추천        | ✔ 강력 추천              | ❌ 가능하면 사용하지 않음   |
+- 왜 Fine-grained를 사용해야 하는가?
+    - GHCR은 “패키지별 권한”이 중요
+    - Fine-grained는 특정 저장소 + 특정 패키지에만 접근 가능
+    - 토큰이 유출되어도 피해 범위 최소화
+    - GitHub이 공식적으로 권장
+- 따라서 GHCR 사용 시 Fine-grained Token 필수
+
+### Fine-grained Token 생성 방법
+1. GitHub → Settings
+1. Developer settings
+1. Personal access tokens → Fine-grained tokens
+1. Generate new token
+1. 필수 권한 설정
+    - Repository access
+        - 토큰이 접근할 저장소 선택
+        - Contents: Read and Write
+        - Metadata: Read
+    - Account permissions
+        - Packages: Read and Write ← GHCR push/pull 위해 필수
+
+## GHCR 로그인
+- PowerShell에서는 echo TOKEN | docker login를 사용하기가 번거롭거나 실패하는 경우가 많음
+- WSL2(Ubuntu)에서 로그인하는 것이 가장 안정적
+- WSL2에서 GHCR 로그인
+    ```
+    echo "<MY_GITHUB_TOKEN>" | docker login ghcr.io -u <GitHub_Username> --password-stdin
+    ```
+- 로그인 성공 메세지 확인
+    ```
+    Login Succeeded
+    ```
+- WSL2에서 로그인하면 PowerShell에서도 push/pull 가능
+    - Docker Desktop은 Windows PowerShell과 WSL2에서 같은 Docker 엔진을 공유하기 때문
+    - 로그인만 WSL에서 하고, 빌드·태깅·푸시는 PowerShell에서 수행 가능
+- 이미 로그인되어 있는지 확인하는 방법 (터미널)
+    - 방법1: 현재 설정된 자격 증명 파일 직접 보기
+        - Linux/WSL 또는 macOS:
+            ```
+            cat ~/.docker/config.json
+            ```
+        - Windows PowerShell:
+            ```
+            type $env:USERPROFILE\.docker\config.json
+            ```
+        - 여기서 확인할 부분
+            - 파일 안에 아래처럼 "ghcr.io"가 있으면 로그인된 상태
+                ```
+                "auths": {
+                    "ghcr.io": {
+                        "auth": "xxxxxxxxxx..."
+                    }
+                }
+                ```
+            - "auth" 값이 있으면 “이미 인증 정보 저장됨 = 로그인됨”
+    - 방법2: docker logout으로 확인
+        - 실제로 logout 시도해보면 로그인 여부를 알 수 있음
+            ```
+            docker logout ghcr.io
+            ```
+        - 결과1: 로그인되어 있다면
+            ```
+            Removing login credentials for ghcr.io
+            ```
+        - 결과2: 로그인되어 있지 않다면
+            ```
+            Not logged in to ghcr.io
+            ```
+    - 방법3: Docker Desktop UI에서 확인
+        - Docker Desktop은 “GHCR 로그인됨”을 직접적으로 표시하지 않음
+        - Docker Desktop의 UI 자체에는 “어떤 레지스트리에 로그인되어 있음”이라는 표시가 없음
+        - 간접적으로 확인할 수 있는 방법은 있음
+        - Docker Desktop의 설정에서 확인 가능
+            - Docker Desktop → Settings → Docker Engine → config.json 조회
+            - "auths" 항목 확인
+                ```
+                "auths": {
+                    "ghcr.io": {
+                        "auth": "xxxxxxxxxx..."
+                    }
+                }
+                ```
+
+## GHCR 규칙에 맞게 이미지 태깅(tag)
+- 형식: `docker tag <로컬_이미지명>:<로컬_버전> ghcr.io/<GitHub_사용자명>/<이미지명>:<버전>`
+    ```
+    docker tag my-app:latest ghcr.io/johndoe/my-app:1.0
+    ```
+
+## 이미지 Push (GHCR 업로드)
+- 형식: `docker push ghcr.io/<GitHub_사용자명>/<이미지명>:<버전>`
+    ```
+    docker push ghcr.io/johndoe/my-app:1.0
+    ```
+
+## 다른 환경에서 Pull & Run
+- 다른 PC, 서버, Docker가 설치된 어디에서든 가능
+- Pull 형식: `docker pull ghcr.io/<GitHub_사용자명>/<이미지명>:<버전>`
+    ```
+    docker pull ghcr.io/johndoe/my-app:1.0
+    ```
+- Run 형식: `docker run -p <호스트포트>:<컨테이너포트> ghcr.io/<GitHub_사용자명>/<이미지명>:<버전>`
+    ```
+    docker run -p 8080:80 ghcr.io/johndoe/my-app:1.0
+    ```
