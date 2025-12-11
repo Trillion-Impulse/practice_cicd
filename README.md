@@ -37,6 +37,62 @@
 - Image 빌드(build) → 이미지 생성
 - Container 실행(run) → 실제 프로그램 실행
 - Registry(GHCR, Docker Hub 등)에 push → 배포
+- Docker 전체 흐름 + GHCR 배포 시각 다이어그램
+    ```
+    # Docker 전체 흐름 + GHCR 배포
+
+            [Source Code]
+                    |
+                    v
+            +----------------+
+            |  Docker Build  |
+            |  (Dockerfile)  |
+            +----------------+
+                    |
+                    v
+            +--------------+
+            | Docker Image |
+            +--------------+
+                    |
+        ----------------------
+        |                    |
+        v                    v
+    [Run Container]        [Docker Tag & Push]
+    - Test / Dev            - Tag image for GHCR
+    - Local container       - docker tag my-app:latest ghcr.io/user/my-app:1.0
+    - Port Mapping (-p)     - docker push ghcr.io/user/my-app:1.0
+    - Volume (-v)
+        |                   
+        v                   
+    [Container Running]
+    - Accessible via mapped ports
+    - Data persisted via volume
+
+    -----------------------------
+
+    [Other Environment / Server]
+        |
+        v
+    [docker pull ghcr.io/user/my-app:1.0]
+        |
+        v
+    [Run Container on new environment]
+    ```
+    - Docker Build
+        - Dockerfile 기반으로 이미지 생성
+        - 애플리케이션 + 의존성 + 환경 포함
+    - Docker Image
+        - 빌드 완료된 이미지
+        - 여러 환경에서 동일하게 실행 가능
+    - Run Container
+        - 호스트에서 컨테이너 실행
+        - 포트 매핑(-p)으로 외부 접속
+        - 볼륨(-v)으로 데이터 영속화
+    - Docker Tag & Push (GHCR)
+        - GHCR에 이미지 업로드
+        - WSL2에서 로그인하면 PowerShell에서도 동일하게 push 가능
+    - Pull & Run on Other Environment
+        - 다른 서버나 환경에서 이미지를 내려받아 동일하게 실행 가능
 
 ## 설치 및 준비
 
