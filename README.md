@@ -639,3 +639,44 @@
     ```
     docker run -p 8080:80 ghcr.io/johndoe/my-app:1.0
     ```
+
+## GHCR에 푸시한 이미지는 어디에 저장되나?
+- GHCR(GitHub Container Registry)에 푸시하면 GitHub 서버에 저장됨
+- 정확히는 GitHub 계정 또는 조직의 컨테이너 레지스트리 공간에 저장됨
+- Docker Hub처럼 별도의 서버를 직접 볼 수 있는 구조가 아니라, GitHub의 리포지토리와 연결된 레지스트리에 저장됨
+- GHCR에 푸쉬하면, 아래의 URL로 접근 가능
+    ```
+    https://ghcr.io/<GitHub_사용자명>/<이미지명>:<버전>
+    ```
+    - `<GitHub_사용자명>` → 계정 또는 조직
+    - `<이미지명>` → 저장된 이미지 이름
+    - `<버전>` → 태그
+
+### GHCR에서 푸시한 결과를 확인하는 방법
+- 방법1: GitHub 웹 UI
+    1. GitHub에서 로그인
+    1. 왼쪽 메뉴 → Packages 선택 또는 계정 프로필 → Packages
+    1. 푸시한 이미지가 리스트로 나타남
+        - 각 패키지를 클릭하면
+            - 버전(tag)
+            - 푸시 날짜
+            - Pull 명령어 예시
+            - 등을 확인 가능
+    1. 즉, GHCR는 GitHub Packages UI를 통해 확인 가능
+- 방법2: 터미널에서 확인
+    1. Docker CLI 사용
+        - docker 이미지를 pull 시도하면 정상 동작 여부로 확인 가능
+            ```
+            docker pull ghcr.io/<사용자명>/<이미지명>:<버전>
+            ```
+        - 또는 레지스트리 목록을 조회
+            ```
+            docker search ghcr.io/<사용자명>/<이미지명>
+            ```
+    1. GitHub API 사용
+        - GitHub의 패키지 API를 통해 계정/조직의 패키지 리스트 확인 가능
+            ```
+            GET /users/<사용자명>/packages?package_type=container
+            ```
+            - JSON 형태로 푸시한 이미지와 태그 정보 제공
+            - CI/CD나 자동 스크립트에서 유용
