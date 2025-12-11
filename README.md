@@ -61,33 +61,33 @@
 ## 관련 명령어
 - Linux 명령어
     - 프로젝트 폴더 생성 및 파일 관련 명령어
-    | 명령어          | 소속        | 용도            | 예시                               |
-    | ------------ | --------- | ------------- | -------------------------------- |
-    | `mkdir`      | Linux/WSL | 새 폴더(디렉토리) 생성 | `mkdir ~/docker-test`            |
-    | `cd`         | Linux/WSL | 디렉토리 이동       | `cd ~/docker-test`               |
-    | `touch`      | Linux/WSL | 새 파일 생성       | `touch requirements.txt`         |
-    | `ls`         | Linux/WSL | 폴더 안 파일 목록 확인 | `ls -l`                          |
-    | `cp`         | Linux/WSL | 파일/폴더 복사      | `cp -r /mnt/c/... ~/docker-test` |
-    | `nano`/`vim` | Linux/WSL | 파일 편집         | `nano Dockerfile`                |
+        | 명령어          | 소속        | 용도            | 예시                               |
+        | ------------ | --------- | ------------- | -------------------------------- |
+        | `mkdir`      | Linux/WSL | 새 폴더(디렉토리) 생성 | `mkdir ~/docker-test`            |
+        | `cd`         | Linux/WSL | 디렉토리 이동       | `cd ~/docker-test`               |
+        | `touch`      | Linux/WSL | 새 파일 생성       | `touch requirements.txt`         |
+        | `ls`         | Linux/WSL | 폴더 안 파일 목록 확인 | `ls -l`                          |
+        | `cp`         | Linux/WSL | 파일/폴더 복사      | `cp -r /mnt/c/... ~/docker-test` |
+        | `nano`/`vim` | Linux/WSL | 파일 편집         | `nano Dockerfile`                |
 - Dockerfile 작성 관련 명령어
     - Dockerfile 안에서만 쓰는 명령어
-    | Dockerfile 명령어 | 소속         | 용도                 | 예시                                    |
-    | -------------- | ---------- | ------------------ | ------------------------------------- |
-    | `FROM`         | Dockerfile | 베이스 이미지 지정         | `FROM python:3.11-slim`               |
-    | `WORKDIR`      | Dockerfile | 컨테이너 내부 작업 디렉토리 설정 | `WORKDIR /app`                        |
-    | `COPY`         | Dockerfile | 파일을 컨테이너 내부로 복사    | `COPY app.py .`                       |
-    | `RUN`          | Dockerfile | 컨테이너 빌드 시 명령 실행    | `RUN pip install -r requirements.txt` |
-    | `CMD`          | Dockerfile | 컨테이너 실행 시 기본 명령 지정 | `CMD ["python", "app.py"]`            |
+        | Dockerfile 명령어 | 소속         | 용도                 | 예시                                    |
+        | -------------- | ---------- | ------------------ | ------------------------------------- |
+        | `FROM`         | Dockerfile | 베이스 이미지 지정         | `FROM python:3.11-slim`               |
+        | `WORKDIR`      | Dockerfile | 컨테이너 내부 작업 디렉토리 설정 | `WORKDIR /app`                        |
+        | `COPY`         | Dockerfile | 파일을 컨테이너 내부로 복사    | `COPY app.py .`                       |
+        | `RUN`          | Dockerfile | 컨테이너 빌드 시 명령 실행    | `RUN pip install -r requirements.txt` |
+        | `CMD`          | Dockerfile | 컨테이너 실행 시 기본 명령 지정 | `CMD ["python", "app.py"]`            |
 - Docker 관련 명령어 (터미널에서 실행)
     - 터미널에서 직접 실행하는 명령어는 Docker 소속
     - WSL2 Linux 터미널에서 실행하면 Linux 환경에서 Docker CLI를 통해 컨테이너 관리 가능
-    | 명령어             | 소속         | 용도                   | 예시                                      |
-    | --------------- | ---------- | -------------------- | --------------------------------------- |
-    | `docker build`  | Docker CLI | Dockerfile 기반 이미지 빌드 | `docker build -t docker-test .`         |
-    | `docker images` | Docker CLI | 로컬 이미지 목록 확인         | `docker images`                         |
-    | `docker run`    | Docker CLI | 컨테이너 실행              | `docker run --rm docker-test`           |
-    | `docker login`  | Docker CLI | 레지스트리 로그인            | `docker login ghcr.io`                  |
-    | `docker push`   | Docker CLI | 이미지 업로드              | `docker push ghcr.io/<사용자>/docker-test` |
+        | 명령어             | 소속         | 용도                   | 예시                                      |
+        | --------------- | ---------- | -------------------- | --------------------------------------- |
+        | `docker build`  | Docker CLI | Dockerfile 기반 이미지 빌드 | `docker build -t docker-test .`         |
+        | `docker images` | Docker CLI | 로컬 이미지 목록 확인         | `docker images`                         |
+        | `docker run`    | Docker CLI | 컨테이너 실행              | `docker run --rm docker-test`           |
+        | `docker login`  | Docker CLI | 레지스트리 로그인            | `docker login ghcr.io`                  |
+        | `docker push`   | Docker CLI | 이미지 업로드              | `docker push ghcr.io/<사용자>/docker-test` |
 - 전체 흐름 기준 명령어 요약
     | 단계               | 명령어                                         | 소속         |
     | ---------------- | ------------------------------------------- | ---------- |
@@ -130,82 +130,82 @@
 ### Dockerfile 작성 전체 흐름
 
 1. 베이스 이미지 선택 (FROM)
-- 컨테이너가 어떤 환경에서 돌아갈지 결정
-    - 어떤 OS를 사용할지
-    - 어떤 파이썬 버전을 사용할지
-    - 가벼운 이미지인지(full/slim 등)
-- 컨테이너는 기본 OS와 Python이 설치된 “기반 환경” 위에 실행됨
-    - 그래서 가장 먼저 FROM이 와야 함
-    - Dockerfile 맨 위에 반드시 있어야 하는 이유
-- DockerHub에서 버전 확인 후 선택
-    - slim 버전은 운영체제(리눅스)를 최소로 줄여 이미지 크기를 작게 만든 버전
-- FROM은 프로젝트의 개발 환경과 같은 버전으로 선택
+    - 컨테이너가 어떤 환경에서 돌아갈지 결정
+        - 어떤 OS를 사용할지
+        - 어떤 파이썬 버전을 사용할지
+        - 가벼운 이미지인지(full/slim 등)
+    - 컨테이너는 기본 OS와 Python이 설치된 “기반 환경” 위에 실행됨
+        - 그래서 가장 먼저 FROM이 와야 함
+        - Dockerfile 맨 위에 반드시 있어야 하는 이유
+    - DockerHub에서 버전 확인 후 선택
+        - slim 버전은 운영체제(리눅스)를 최소로 줄여 이미지 크기를 작게 만든 버전
+    - FROM은 프로젝트의 개발 환경과 같은 버전으로 선택
 
 1. 작업 디렉토리 및 코드 복사 (WORKDIR, COPY)
-- 컨테이너 내부에서 프로그램이 존재할 위치를 지정
-- 내 PC의 파일을 컨테이너 내부로 복사
-- 내 컴퓨터의 프로젝트 폴더 → 컨테이너의 /app 폴더로 가져가는 과정
-- WORKDIR
-    - 컨테이너 안에서 “아래부터 실행할 기본 폴더”를 지정
-        ```
-        WORKDIR /app
-        ```
-        - 도커에게 명령: 이 컨테이너 안에서 앞으로의 모든 명령을 `/app`폴더에서 실행해라
-            - RUN 명령 → /app 안에서 실행됨
-            - COPY 명령 → /app 기준으로 복사됨 (상대경로 기준 처리)
-            - CMD 명령 → /app 안에서 실행됨
-            - pip 설치 → /app 기준
-    - 만약 이걸 안 적으면?
-        - / (루트) 경로에서 실행되어 매우 지저분해지고 구조가 망가짐
-        - 도커 컨테이너는 일종의 작은 리눅스 컴퓨터
-        - 컨테이너 안에서도 “현재 작업 폴더”라는 개념이 있음
-        - 리눅스 서버에 접속하면 기본 폴더가 / (루트)
-        - 루트에 모든 파일을 놓고 작업하면 지저분해짐, 관리 안됨
-        - 관리를 위해 프로젝트 전용 폴더가 필요
-        - 그래서 `/app`, `/project`와 같은 프로젝트 디렉토리를 만듬
-        - 프로젝트 디렉토리 내부에서만 코드 실행, 패키지 설치, 로그 저장 등의 작업을 수행
-- COPY
-    - 내 PC 파일을 컨테이너 안으로 넣는 명령
-        ```
-        COPY . /app
-        ```
-        - `COPY [호스트의 파일/폴더] [컨테이너 내의 위치]`
-        - `.` → 현재 내 컴퓨터의 프로젝트 폴더
-        - `/app`→ 컨테이너 내부의 /app 폴더
-        - 내 컴퓨터의 프로젝트 폴더 전체를 컨테이너의 /app 폴더로 복사
-- WORKDIR은 컨테이너에서 프로젝트를 넣어둘 폴더
-    - 보통 /app 많이 사용
-- COPY는 현재 폴더 통째로 넣는 것이 일반적
-    - 단, .dockerignore 파일로 불필요한 파일 제외 가능
+    - 컨테이너 내부에서 프로그램이 존재할 위치를 지정
+    - 내 PC의 파일을 컨테이너 내부로 복사
+    - 내 컴퓨터의 프로젝트 폴더 → 컨테이너의 /app 폴더로 가져가는 과정
+    - WORKDIR
+        - 컨테이너 안에서 “아래부터 실행할 기본 폴더”를 지정
+            ```
+            WORKDIR /app
+            ```
+            - 도커에게 명령: 이 컨테이너 안에서 앞으로의 모든 명령을 `/app`폴더에서 실행해라
+                - RUN 명령 → /app 안에서 실행됨
+                - COPY 명령 → /app 기준으로 복사됨 (상대경로 기준 처리)
+                - CMD 명령 → /app 안에서 실행됨
+                - pip 설치 → /app 기준
+        - 만약 이걸 안 적으면?
+            - / (루트) 경로에서 실행되어 매우 지저분해지고 구조가 망가짐
+            - 도커 컨테이너는 일종의 작은 리눅스 컴퓨터
+            - 컨테이너 안에서도 “현재 작업 폴더”라는 개념이 있음
+            - 리눅스 서버에 접속하면 기본 폴더가 / (루트)
+            - 루트에 모든 파일을 놓고 작업하면 지저분해짐, 관리 안됨
+            - 관리를 위해 프로젝트 전용 폴더가 필요
+            - 그래서 `/app`, `/project`와 같은 프로젝트 디렉토리를 만듬
+            - 프로젝트 디렉토리 내부에서만 코드 실행, 패키지 설치, 로그 저장 등의 작업을 수행
+    - COPY
+        - 내 PC 파일을 컨테이너 안으로 넣는 명령
+            ```
+            COPY . /app
+            ```
+            - `COPY [호스트의 파일/폴더] [컨테이너 내의 위치]`
+            - `.` → 현재 내 컴퓨터의 프로젝트 폴더
+            - `/app`→ 컨테이너 내부의 /app 폴더
+            - 내 컴퓨터의 프로젝트 폴더 전체를 컨테이너의 /app 폴더로 복사
+    - WORKDIR은 컨테이너에서 프로젝트를 넣어둘 폴더
+        - 보통 /app 많이 사용
+    - COPY는 현재 폴더 통째로 넣는 것이 일반적
+        - 단, .dockerignore 파일로 불필요한 파일 제외 가능
 
 1. 필요한 패키지 설치 (RUN)
-- 컨테이너 안에서 패키지를 설치
-- 예
-    ```
-    RUN pip install -r requirements.txt
-    ```
-    - 이 명령은 실제로 컨테이너 안에서 실행되는 명령
-    - 마치 Linux 서버에서 pip install 하는 것과 동일
-- 컨테이너에는 앞선 `FROM` 명령으로 OS만 존재
-    - 그래서 필요한 패키지를 내부에 설치해야 함
-- 항상 파일 복사 후(COPY 이후) 작성
-    - requirements.txt가 먼저 복사되어야 설치가 가능하기 때문
-- RUN 단계는 설치해야 하는 패키지에 따라 달라짐
+    - 컨테이너 안에서 패키지를 설치
+    - 예
+        ```
+        RUN pip install -r requirements.txt
+        ```
+        - 이 명령은 실제로 컨테이너 안에서 실행되는 명령
+        - 마치 Linux 서버에서 pip install 하는 것과 동일
+    - 컨테이너에는 앞선 `FROM` 명령으로 OS만 존재
+        - 그래서 필요한 패키지를 내부에 설치해야 함
+    - 항상 파일 복사 후(COPY 이후) 작성
+        - requirements.txt가 먼저 복사되어야 설치가 가능하기 때문
+    - RUN 단계는 설치해야 하는 패키지에 따라 달라짐
 
 1. 컨테이너 실행 명령 (CMD)
-- 컨테이너가 “시작될 때 실행할 메인 명령”을 지정
-- 예
-    ```
-    CMD ["python", "hello.py"]
-    ```
-    - 컨테이너가 실행되면, 파이썬으로 hello.py를 실행하라는 뜻
-- CMD는 프로그램의 “메인 함수”와 같음
-    - 컨테이너는 하나의 목적을 가진 유닛
-        - 그래서 컨테이너가 켜지면 무엇을 할지 지정해야 함
+    - 컨테이너가 “시작될 때 실행할 메인 명령”을 지정
     - 예
-        - 웹 서버 → CMD ["uvicorn", "app:app"]
-        - 스케줄러 → CMD ["python", "scheduler.py"]
-        - 크롤러 → CMD ["python", "crawler.py"]
-- 컨테이너의 진입점(main)을 적는 단계
-- CMD는 프로그램의 메인 시작점
-    - 컨테이너 실행 시 자동으로 실행될 파일 지정
+        ```
+        CMD ["python", "hello.py"]
+        ```
+        - 컨테이너가 실행되면, 파이썬으로 hello.py를 실행하라는 뜻
+    - CMD는 프로그램의 “메인 함수”와 같음
+        - 컨테이너는 하나의 목적을 가진 유닛
+            - 그래서 컨테이너가 켜지면 무엇을 할지 지정해야 함
+        - 예
+            - 웹 서버 → CMD ["uvicorn", "app:app"]
+            - 스케줄러 → CMD ["python", "scheduler.py"]
+            - 크롤러 → CMD ["python", "crawler.py"]
+    - 컨테이너의 진입점(main)을 적는 단계
+    - CMD는 프로그램의 메인 시작점
+        - 컨테이너 실행 시 자동으로 실행될 파일 지정
