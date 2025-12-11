@@ -316,3 +316,123 @@
         ```
         - 호스트 ./data 폴더 ↔ 컨테이너 /app/data 폴더
         - 컨테이너 안에서 변경한 파일이 호스트에도 반영되고, 반대로 호스트 파일 변경도 컨테이너에서 반영됨
+
+## 이미지 배포
+- 무엇을 하는 단계인가?
+    - 생성한 Docker 이미지를 Docker Hub 또는 다른 Registry에 업로드
+- 언제 필요한가?
+    - 다른 개발자, 서버, 클라우드 환경에서 동일한 이미지를 사용하려면 필요
+- 왜 필요한가?
+    - 이미지 배포를 통해 버전 관리와 공유가 가능
+    - 배포 자동화(CI/CD)에도 필수
+
+### 컨테이너 레지스트리
+- 컨테이너 이미지를 보관, 관리, 공유하는 서버
+- Docker 이미지의 저장소
+- 왜 필요한가?
+    - 이미지를 다른 사람이나 서버와 공유할 때 필요
+    - CI/CD 파이프라인에서 자동 배포할 때 필요
+    - 여러 환경(개발, 테스트, 운영)에서 동일한 환경을 보장
+- 쉽게 비유하면
+    - GitHub가 코드 저장소라면, Docker Registry는 컨테이너 이미지 저장소
+- 대표적인 컨테이너 레지스트리
+    | 이름                            | 종류                | 특징               | 추천 상황                       |
+    | ----------------------------- | ----------------- | ---------------- | --------------------------- |
+    | **Docker Hub**                | Public / Official | 가장 유명, 공개 이미지 많음 | 오픈 소스 이미지 활용, 간단한 공유        |
+    | **AWS ECR**                   | Private           | AWS 환경에 최적화      | AWS EC2, ECS, EKS와 연동       |
+    | **GCP Artifact Registry**     | Private           | GCP 환경 최적화       | GCP Compute, GKE 사용 시       |
+    | **Azure Container Registry**  | Private           | Azure 환경 최적화     | Azure VM, AKS 사용 시          |
+    | **GitHub Container Registry** | Public / Private  | GitHub 계정과 연동    | GitHub Actions CI/CD와 함께 사용 |
+- 언제 어떤 레지스트리를 선택할까?
+    1. 오픈 소스로 공유할 때 → Docker Hub
+    1. 클라우드 환경과 연동 → 해당 클라우드 레지스트리
+        - AWS → ECR
+        - GCP → Artifact Registry
+        - Azure → ACR
+    1. Private 이미지 → Private Registry
+        - GitHub Container Registry 또는 사내 전용 레지스트리
+- 컨테이너 이미지를 레지스트리에 올리는 과정
+    - 순서 요약
+        ```
+        [이미지 빌드 완료]
+                ↓
+        [레지스트리 로그인]
+                ↓
+        [이미지 태깅]
+                ↓
+        [이미지 푸시]
+                ↓
+        [필요 시 다른 환경에서 Pull 후 컨테이너 실행]
+        ```
+
+    1. 레지스트리 로그인
+        - Docker Hub
+            ```
+            docker login
+            ```
+        - AWS ECR
+            ```
+            aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+            ```
+        - GitHub Container Registry (GHCR)
+            ```
+            echo <GH_TOKEN> | docker login ghcr.io -u <GitHub_username> --password-stdin
+            ```
+            - GH_TOKEN은 GitHub Personal Access Token으로, write:packages 권한 필요
+            - 윈도우 사용시
+                - Docker Desktop + WSL2 통합 구조
+                    - Docker Desktop 설치 시, 하나의 Docker Engine을 사용
+                    - Windows PowerShell과 WSL2(Ubuntu) 터미널 모두 같은 Docker 엔진에 접근 가능
+                    - 즉, 이미지, 컨테이너, 로그인 정보 모두 공유
+                - GHCR 인증 정보가 Docker Engine에 저장되므로, vscode의 Windows PowerShell에서도 그대로 사용 가능
+                - 별도로 WSL에서 빌드하거나 push할 필요 없음
+                - 물론 WSL에서 그대로 태깅, 푸시, 풀 수행 가능
+
+    1. 이미지 태깅(Tag)
+        - 레지스트리에 올릴 이름과 버전을 지정
+        - Docker Hub
+            ```
+            docker tag my-app:latest johndoe/my-app:1.0
+            ```
+        - AWS ECR
+            ```
+            docker tag my-app:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:1.0
+            ```
+        - GHCR
+            ```
+            docker tag my-app:latest ghcr.io/johndoe/my-app:1.0
+            ```
+    
+    1. 이미지 푸시(Push)
+        - 레지스트리에 업로드
+        - Docker Hub
+            ```
+            docker push johndoe/my-app:1.0
+            ```
+        - AWS ECR
+            ```
+            docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:1.0
+            ```
+        - GHCR
+            ```
+            docker push ghcr.io/johndoe/my-app:1.0
+            ```
+    
+    1. 이미지 풀(Pull)
+        - 다른 환경이나 서버에서 이미지를 내려받아 컨테이너 실행 가능
+        - Docker Hub
+            ```
+            docker pull johndoe/my-app:1.0
+            ```
+        - AWS ECR
+            ```
+            docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:1.0
+            ```
+        - GHCR
+            ```
+            docker pull ghcr.io/johndoe/my-app:1.0
+            ```
+- 참고
+    - GHCR의 경우 리포지토리가 Private일 수 있으므로, GH_TOKEN과 권한 설정이 중요
+    - 태그(:latest, :v1.0)를 잘 관리하면 버전별 배포가 편리
+    - CI/CD에서는 자동 태그 + 자동 푸시를 설정하면 효율적
