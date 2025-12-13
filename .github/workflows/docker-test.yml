@@ -3,7 +3,7 @@ name: docker-test
 on:
   push:
     branches:
-      -main
+      - main
 
 jobs:
   build-and-push:
