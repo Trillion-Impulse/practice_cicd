@@ -31,4 +31,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/${{ github.repository_owner.toLowerCase() }}/docker-test-image:latest
+          tags: ghcr.io/trillion-impulse/docker-test-image:latest
