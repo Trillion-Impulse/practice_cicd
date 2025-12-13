@@ -32,3 +32,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/trillion-impulse/docker-test-image:latest
+      
+      - name: Run Docker container
+        run: |
+          docker run --rm ghcr.io/trillion-impulse/docker-test-image:latest
