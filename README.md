@@ -773,3 +773,253 @@
             ```
             - JSON 형태로 푸시한 이미지와 태그 정보 제공
             - CI/CD나 자동 스크립트에서 유용
+
+# Github Actions
+- 왜 필요한가?
+    - 개발을 하다 보면 매번 아래와 같은 일을 반복
+        - 코드를 푸시했는데 빌드가 깨졌는지 확인
+        - 테스트 직접 실행
+        - 서버에 배포
+    - 사람이 수동으로 하면 실수 + 시간 소요
+- Github Actions는 GitHub에서 발생한 이벤트를 계기로 미리 정해둔 작업을 자동으로 실행하는 시스템
+    - 자동 빌드
+    - 자동 테스트
+    - 자동 배포
+    - 이것을 통틀어 CI/CD라고 함
+        - Continuous Integration / Continuous Deployment
+        - 지속 통합 / 지속 배포
+- GitHub Actions는 `YAML 파일에 적힌 설계도`를 GitHub가 읽고 실행하는 시스템
+    - 자동화 규칙을 코드로 선언하는 방식
+    - 왜 YAML을 채택했을까?
+        - 사람이 읽기 쉬움
+        - 기계가 파싱하기 쉬움
+        - 설정 파일에 특화
+    - YAML 파일이 존재하고, 정의된 Event가 발생할 때 GitHub Actions가 동작
+    - YAML 파일의 위치는 `.github/workflows/파일이름.yml`
+        - 이름은 중요하지 않지만, 위치는 절대적으로 고정되어야 함
+            - GitHub가 그 경로만 스캔하기 때문
+    - YAML 파일 하나가 Workflow 하나를 담당
+        - 여러 자동화가 필요하면 여러개의 YAML 파일 사용 가능
+- GitHub에서 일어나는 일을 계기로 미리 정의한 작업을 깨끗한 환경에서 자동으로 실행하는 시스템
+
+## 실행 흐름
+- 논리적 실행 흐름
+    ```
+    Workflow ( Event → Job → Step )
+    ```
+
+## Workflow
+- Workflow 란?
+    - 이벤트가 발생했을 때 실행할 작업 시나리오
+    - `.github/workflows/이름.yml`
+    - 저장소 안에 명시적으로 선언
+    - GitHub Actions에서 Workflow는 YAML 파일로 정의되는 최상위 단위이며, Event와 Job은 Workflow 내부에 선언
+        - Event는 Workflow의 실행 조건
+        - Job은 Workflow가 수행하는 실제 작업 단위
+- 예시 구조
+    ```
+    name: Docker Build Test
+
+    on: push
+
+    jobs:
+        build:
+            ...
+    ```
+    - name: UI에 보이는 이름
+        - GitHub Actions 탭에 표시
+
+## Event - 언제 실행할 것인가?
+- 왜 필요한가?
+    - 어떤 상황에서 자동화를 돌릴지 조건이 필요
+- Event 란?
+    - GitHub에서 발생하는 모든 행동
+        - push
+        - pull request
+        - release
+        - issue 생성
+        - schedule (cron)
+- 예시
+    ```
+    on:
+        push:
+            branches: [ main ]
+    ```
+    - main 브랜치에 코드가 올라오면 자동으로 다음 단계 실행
+- 자동화의 출발 버튼
+
+## Job - 어떤 환경에서 무엇을 할 것인가?
+- Job 이란?
+    - 하나의 독립된 실행 단위 (하나의 가상 머신)
+    - 예시
+        ```
+        jobs:
+            build:
+                runs-on: ubuntu-latest
+        ```
+    - 하나의 Job = 완전히 새로운 컴퓨터
+    - 실패해도 다른 Job에 영향을 미치지 않음
+- Job 구조
+    - 트리구조 + 역할
+        ```
+        job - 하나의 Runner에서 실행되는 작업 단위
+        │
+        ├─ runs-on - Job이 실행될 Runner(실행 환경) 선택
+        │
+        ├─ needs - 이 Job이 의존하는 선행 Job 지정
+        │
+        ├─ if - Job 실행 여부를 결정하는 조건
+        │
+        ├─ env - Job 전체에 적용되는 환경 변수
+        │
+        ├─ permissions - GitHub API 접근 권한 범위 설정
+        │
+        ├─ timeout-minutes - Job 최대 실행 시간 제한
+        │
+        ├─ continue-on-error - Job 실패를 Workflow 실패로 처리할지 여부
+        │
+        ├─ concurrency - 동일 그룹 Job의 동시 실행 제어
+        │
+        ├─ strategy - Job을 여러 경우로 반복 실행하기 위한 전략
+        │   │
+        │   ├─ matrix - 여러 값 조합으로 Job을 반복 실행
+        │   ├─ fail-fast - 하나 실패 시 나머지 Job 중단 여부
+        │   └─ max-parallel - 동시에 실행할 Job 수 제한
+        │
+        ├─ container - Runner 위에서 사용할 메인 컨테이너 설정
+        │   │
+        │   ├─ image - 사용할 Docker 이미지
+        │   ├─ env - 컨테이너 내부 환경 변수
+        │   ├─ ports - 포트 매핑 설정
+        │   ├─ options - docker run 옵션 전달
+        │   └─ credentials - private registry 인증 정보
+        │
+        ├─ services - Job에서 함께 사용할 서비스 컨테이너 정의
+        │   │
+        │   └─ <service-name> - 서비스 컨테이너 식별자
+        │       │
+        │       ├─ image - 서비스 컨테이너 이미지
+        │       ├─ ports - 서비스 포트 노출
+        │       ├─ env - 서비스 환경 변수
+        │       └─ options - docker run 옵션
+        │
+        ├─ defaults - Step들의 기본 실행 옵션 설정
+        │   │
+        │   └─ run - run 타입 Step에 대한 기본값
+        │       ├─ shell - 기본 쉘 지정
+        │       └─ working-directory - 기본 실행 디렉토리
+        │
+        ├─ outputs - 이 Job이 외부 Job으로 전달할 결과값 정의
+        │
+        └─ steps - Job 안에서 실제로 실행되는 명령들의 목록
+            │
+            └─ step - Job 안에서 순차 실행되는 최소 실행 단위
+                │
+                ├─ name - 사람이 읽는 Step 이름
+                ├─ uses - 재사용 가능한 Action 실행
+                ├─ run - 쉘 명령 실행
+                ├─ with - Action에 전달할 입력값
+                ├─ env - Step 전용 환경 변수
+                ├─ if - Step 실행 조건
+                ├─ id - Step 식별자 (outputs 참조용)
+                ├─ continue-on-error - Step 실패 허용 여부
+                ├─ timeout-minutes - Step 최대 실행 시간 제한
+                ├─ working-directory - Step 실행 위치
+                └─ shell - Step에서 사용할 쉘
+        ```
+
+### Runner - 어디서 실행되는가?
+- Runner 란?
+    - GitHub가 제공하는 가상 머신
+    - 혹은 회사 내부 서버 (Self-hosted)
+- 예시
+    ```
+    runs-on: ubuntu-latest
+    ```
+- 왜 Runner가 필요한가?
+    - Job을 실행할 실제 컴퓨터가 필요
+
+### Step - 구체적으로 어떤 단계로 무엇을 하는가?
+- Step 이란?
+    - Job 안에서 순서대로 실행되는 명령
+    - 예시
+        ```
+        steps:
+            - name: Checkout
+            - name: Build
+            - name: Test
+        ```
+- 왜 Step 단위인가?
+    - 작업을 쪼개야
+        - 실패 지점 파악 가능
+        - 재사용 가능
+        - 가독성 향상
+
+#### Action - 이미 만들어진 도구
+- Action 이란?
+    - Step에서 사용하는 재사용 가능한 모듈
+    - 자주 쓰는 작업을 표준화해서 재사용 가능하게 만든 모듈
+    - 예시
+        ```
+        - uses: actions/checkout@v4
+        ```
+        - 이미 만들어져 있는 Action(재사용 가능한 작업 묶음)인 `checkout@v4`를 실행
+- 구조
+    ```
+    uses: owner/repository@ref
+    ```
+    - owner: GitHub 사용자 또는 조직
+    - repository: Action이 들어 있는 repo
+    - @ref: 버전 (태그 / 브랜치 / 커밋)
+- Action의 정체
+    - 하나의 GitHub repository
+        - 그 repo 안에
+            - 실행 스크립트
+            - Dockerfile 또는 JS 코드
+            - action.yml (입력/출력 정의)
+    - 실행 가능한 패키지화된 자동화 코드
+- 왜 필요한가?
+    - git clone
+    - docker login
+    - 캐시 설정
+    - 등의 동일한 반복 작업을 매번 만들면 비효율적
+- uses는 어디서 확인할 수 있나?
+    - GitHub Marketplace
+    - 공식 Actions
+        | Action                     | 역할                  |
+        | -------------------------- | ------------------- |
+        | `actions/checkout`         | 코드 checkout         |
+        | `actions/setup-node`       | Node.js 설치          |
+        | `actions/setup-python`     | Python 설치           |
+        | `actions/cache`            | 빌드 캐시               |
+        | `docker/build-push-action` | Docker build & push |
+- uses로 실행되는 Action의 종류
+    - JavaScript Action
+    - Docker Action
+    - Composite Action
+        - 여러 step 묶음
+        - YAML 재사용
+- `uses` vs `run` (언제 무엇을 사용?)
+    | 상황                             | 권장     |
+    | ------------------------------ | ------ |
+    | 표준 작업 (checkout, setup, login) | `uses` |
+    | 복잡한 인증 / 설정                    | `uses` |
+    | 한두 줄 명령                        | `run`  |
+    | 프로젝트 전용 로직                     | `run`  |
+- `@ref`
+    - 왜 버전을 고정해야 하나?
+        - @main → 갑자기 깨질 수 있음
+        - @v4 → 안정
+- Action 선택 기준
+    - 공식 or 유명한가?
+        - actions/*
+        - docker/*
+        - 별점, 사용량
+    - 유지보수 중인가?
+        - 최근 커밋
+        - 최신 GitHub Actions API 사용 여부
+    - 최소 권한을 쓰는가?
+        - README에 권한 설명 있음?
+        - 과도한 token 요구 ❌
+    - 입력/출력이 명확한가?
+        - with 설명 잘 되어 있음
