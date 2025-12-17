@@ -586,6 +586,7 @@
     - 태그(:latest, :v1.0)를 잘 관리하면 버전별 배포가 편리
     - CI/CD에서는 자동 태그 + 자동 푸시를 설정하면 효율적
 
+
 # GitHub Container Registry(GHCR)
 - GitHub에서 제공하는 컨테이너 이미지 저장소(Container Registry)
 - Docker Hub와 비슷하지만, GitHub 계정 및 저장소와 밀접하게 연결되어 있음
@@ -1023,3 +1024,76 @@
         - 과도한 token 요구 ❌
     - 입력/출력이 명확한가?
         - with 설명 잘 되어 있음
+
+# Artifact 관리
+- Artifact 란?
+    - Artifact(아티팩트)는 소프트웨어 개발이나 데이터 처리 과정에서 코드 실행 결과로 생성되는 파일, 데이터, 모델, 보고서 등을 의미
+    - 예시
+        - CSV, JSON 파일 (result.csv, report.json)
+        - 머신러닝 모델 파일 (model.pkl, model.h5)
+        - 빌드된 실행 파일 (app.exe, app.jar)
+    - 코드가 만들어내는 결과물
+
+## Artifact가 생성되는 과정과 관리
+1. 로컬 코드 실행
+    - 예시
+        ```
+        import pandas as pd
+        df = pd.DataFrame({'a':[1,2,3]})
+        df.to_csv('result.csv', index=False)
+        ```
+        - result.csv가 artifact 임
+    - 관리
+        - 프로젝트 폴더 안에 output/ 또는 artifacts/ 폴더를 만들어 저장하면 추적 및 공유가 쉬움
+
+1. Docker 환경에서 Artifact 다루기
+    - Dockerfile 예시
+        ```
+        FROM python:3.11
+        WORKDIR /app
+        COPY . /app
+        RUN pip install pandas
+        CMD ["python", "generate_csv.py"]
+        ```
+    - 컨테이너 실행 후 artifact 확인
+        ```
+        docker build -t myapp .
+        docker run --name myapp-container myapp
+        ```
+    - artifact를 로컬로 복사
+        ```
+        docker cp myapp-container:/app/result.csv ./result.csv
+        ```
+        - `myapp-container`: 컨테이너 이름
+        - `/app/result.csv`: 컨테이너 내부 artifact 경로
+        - `./result.csv`: 로컬로 내려받을 artifact
+    - Docker 안에서 생성된 파일도 artifact이며, docker cp로 로컬로 가져올 수 있dma
+
+1. CI/CD(GitHub Actions)에서 Artifact 활용
+    - GitHub Actions 워크플로우 예시
+        ```
+        name: Build and Generate Artifact
+
+        on: [push]
+
+        jobs:
+            build:
+                runs-on: ubuntu-latest
+                steps:
+                - uses: actions/checkout@v3
+                - name: Set up Python
+                  uses: actions/setup-python@v4
+                  with:
+                    python-version: 3.11
+                - name: Install dependencies
+                  run: pip install pandas
+                - name: Run script
+                  run: python generate_csv.py
+                - name: Upload artifact
+                  uses: actions/upload-artifact@v3
+                  with:
+                    name: result-artifact
+                    path: result.csv
+        ```
+        - python generate_csv.py → artifact 생성
+        - actions/upload-artifact → GitHub Actions 서버에서 artifact를 저장하고, 나중에 다운로드 가능
