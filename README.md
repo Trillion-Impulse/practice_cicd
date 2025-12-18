@@ -1097,3 +1097,137 @@
         ```
         - python generate_csv.py → artifact 생성
         - actions/upload-artifact → GitHub Actions 서버에서 artifact를 저장하고, 나중에 다운로드 가능
+
+# 환경변수 관리
+- 환경변수란?
+    - 환경변수는 코드 밖에서 프로그램에 값을 전달하는 방법
+    - 운영체제(OS)가 관리
+    - 프로그램은 `os.getenv("이름")`으로 읽기만 함
+- 예시
+    ```
+    import os
+    print(os.getenv("API_KEY"))
+    ```
+
+## .env
+- 환경변수 파일의 형식
+- .env는 로컬 개발용
+    - 로컬에서 빠르게 개발하기 위한 용도
+    - 실수로 유출되기 쉬움
+    - 로컬에서 .env + python-dotenv 조합으로 사용
+
+## Docker에서 환경변수를 다루는 방법
+1. `-e` 옵션
+- 컨테이너 실행 시 직접 환경변수 전달
+- 예시
+    ```
+    docker run -e API_KEY=secret-value docker-test
+    ```
+- 특징
+    | 장점        | 단점      |
+    | --------- | ------- |
+    | 간단함       | 자동화에 불편 |
+    | 테스트용으로 좋음 | 값 노출 위험 |
+- 로컬 테스트용으로 적합
+
+1. --env-file (Docker가 .env를 쓰는 유일한 경우)
+- Docker가 .env 파일을 읽어서 환경변수로 변환
+- 예시
+    ```
+    docker run --env-file .env docker-test
+    ```
+- 특징
+    | 장점            | 단점             |
+    | ------------- | -------------- |
+    | 로컬 개발에 편리     | CI/CD에서는 사용 불가 |
+    | `.env` 재사용 가능 | GitHub에 없음     |
+- 로컬 Docker 실행에 적합
+- Dockerfile은 .env를 읽지 않음
+    - `docker run` 단계에서만 가능
+
+1. ARG + ENV (CI/CD에서 핵심)
+- 이미지 빌드 시 값을 전달
+- 빌드 결과물에 환경변수로 저장
+- Dockerfile 예시
+    ```
+    ARG API_KEY
+    ENV API_KEY=${API_KEY}
+    ```
+- 빌드 명령
+    ```
+    docker build --build-arg API_KEY=secret .
+    ```
+- 특징
+    | 장점                    | 단점                |
+    | --------------------- | ----------------- |
+    | GitHub Actions와 궁합 좋음 | 이미지 히스토리에 남을 수 있음 |
+- CI/CD 빌드 단계에서 사용
+
+1. Docker에서의 보안 주의사항
+- ARG는 빌드 로그 및 이미지 레이어에 남을 수 있음
+- 그래서 빌드에는 비밀값을 쓰지 않음
+- 실행(run) 단계에서 주입하는 구조를 주로 사용
+
+## GitHub Actions에서 환경변수를 다루는 방법
+1. secrets → env (가장 권장)
+- GitHub Secrets를 환경변수로 매핑
+- 예시
+    ```
+    jobs:
+        build:
+            runs-on: ubuntu-latest
+            env:
+                API_KEY: ${{ secrets.API_KEY }}
+
+            steps:
+                - run: python docker-test.py
+    ```
+- 특징
+    | 장점    | 단점        |
+    | ----- | --------- |
+    | 가장 안전 | GitHub 전용 |
+- Python 실행, 테스트 단계에 최적
+
+1. step 단위 env
+- 특정 step에서만 환경변수 사용
+- 예시
+    ```
+    - name: Run app
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+      run: python docker-test.py
+    ```
+- 최소 권한 원칙에 부합
+- 가장 보안 친화적
+
+1. Docker 실행 시 주입
+- GitHub Actions → Docker 컨테이너로 전달
+- 예시
+    ```
+    - name: Run container
+      run: |
+        docker run \
+            -e API_KEY=${{ secrets.API_KEY }} \
+            docker-test
+    ```
+- 운영 환경과 가장 유사
+
+1. --build-arg (빌드용)
+- 예시
+    ```
+    - name: Build
+      run: |
+        docker build \
+            --build-arg API_KEY=${{ secrets.API_KEY }} \
+            -t docker-test .
+
+    ```
+
+## 로컬, Docker, GitHub Actions 비교
+- 비교 표
+    | 구분    | 로컬          | Docker      | GitHub Actions |
+    | ----- | ----------- | ----------- | -------------- |
+    | 저장    | `.env`      | 없음          | GitHub Secrets |
+    | 주입 시점 | 실행 전        | run / build | job / step     |
+    | 코드 접근 | `os.getenv` | 동일          | 동일             |
+    | 보안 수준 | 낮음          | 중           | 높음             |
