@@ -1223,6 +1223,95 @@
 
     ```
 
+### GitHub Actions의 Secrets란?
+- Secrets는 비밀번호, API 키, 토큰 같은 민감한 값을 코드에 직접 적지 않고 GitHub가 안전하게 보관해 주는 기능
+- 예시
+    - AWS_ACCESS_KEY
+    - DATABASE_PASSWORD
+    - API_TOKEN
+- 이 값들은 저장소 코드에서는 보이지 않고, GitHub Actions 실행 중에만 사용 가능
+- Secrets를 저장소에 추가하는 과정
+    1. GitHub 저장소로 이동
+        - GitHub에 로그인
+        - 환경변수를 사용하고 싶은 Repository(저장소) 클릭
+    1. Settings 메뉴 클릭
+        - 저장소 상단 탭에서 Settings 클릭
+    1. Secrets 설정 화면으로 이동
+        - 왼쪽 메뉴에서 순서대로 클릭
+            ```
+            Security → Secrets and variables → Actions
+            ```
+    1. 새 Secret 추가
+        - New repository secret 버튼 클릭 후 아래 항목 작성
+            | 항목         | 설명               |
+            | ---------- | ---------------- |
+            | **Name**   | 환경변수 이름 (대문자 권장) |
+            | **Secret** | 실제 값 (비밀번호, 키 등) |
+            - 예시
+                ```
+                Name: DATABASE_PASSWORD
+                Secret: my-super-secret-password
+                ```
+        - Save
+            - Save한 시점부터 Secret 저장됨
+- Secrets를 GitHub Actions Workflow에서 사용하는 방법
+    - GitHub Actions는 .github/workflows/*.yml 파일에 적힌 자동화 시나리오
+    - 기본 파일 위치
+        ```
+        .github/
+        └── workflows/
+            └── ci.yml
+        ```
+    - Secrets 불러오는 문법
+        ```
+        ${{ secrets.SECRET_NAME }}
+        ```
+    - Secrets를 환경변수로 설정하는 방법 (가장 흔함)
+        - step 안에서 설정
+            ```
+            name: Example Workflow
+
+            on: [push]
+
+            jobs:
+                build:
+                    runs-on: ubuntu-latest
+
+                    steps:
+                        - name: 환경변수 설정 예제
+                        run: echo "Hello World"
+                        env:
+                            DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+            ```
+            - DATABASE_PASSWORD라는 환경변수를 GitHub Secrets에 저장된 값으로 설정
+            - step 안에서 설정했으므로 해당 step 안에서만 사용 가능
+        - job 전체에 설정 (여러 step에서 공통으로 사용할 때)
+            ```
+            jobs:
+                build:
+                    runs-on: ubuntu-latest
+                    env:
+                        DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+
+                    steps:
+                      - name: 사용 예제
+                        run: echo "비밀번호 길이: ${#DATABASE_PASSWORD}"
+            ```
+- 실제 사용 예시
+    - Python
+        - `*.yml`
+            ```
+            - name: Run script
+            run: python main.py
+            env:
+                DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+            ```
+        - `*.py`
+            ```
+            import os
+            print(os.getenv("DB_PASSWORD"))
+            ```
+
 ## 로컬, Docker, GitHub Actions 비교
 - 비교 표
     | 구분    | 로컬          | Docker      | GitHub Actions |
