@@ -840,6 +840,44 @@
         - release
         - issue 생성
         - schedule (cron)
+    - 코드 변경 관련
+        | 이벤트                   | 설명                               |
+        | --------------------- | -------------------------------- |
+        | `push`                | 커밋이 push될 때                      |
+        | `pull_request`        | PR 생성 / 수정 / 머지 시                |
+        | `pull_request_target` | PR 대상 브랜치 기준 실행 (fork PR, 보안 주의) |
+    - 수동 / 시간 기반 (자동화 핵심)
+        | 이벤트                 | 설명                |
+        | ------------------- | ----------------- |
+        | `workflow_dispatch` | 수동 실행 버튼 (입력값 가능) |
+        | `schedule`          | cron 기반 주기 실행     |
+    - 릴리즈 / 배포 관련
+        | 이벤트                 | 설명                      |
+        | ------------------- | ----------------------- |
+        | `release`           | GitHub Release 생성/수정/삭제 |
+        | `deployment`        | deployment 생성 시         |
+        | `deployment_status` | 배포 성공/실패 시              |
+    - 이슈 / 협업 관련
+        | 이벤트             | 설명                     |
+        | --------------- | ---------------------- |
+        | `issues`        | issue 열기/닫기/수정         |
+        | `issue_comment` | issue 또는 PR 댓글         |
+        | `discussion`    | GitHub Discussions 이벤트 |
+    - 저장소 / 설정 관련
+        | 이벤트      | 설명                  |
+        | -------- | ------------------- |
+        | `fork`   | repo fork 시         |
+        | `star`   | repo star 찍힐 때      |
+        | `watch`  | watch(구독)할 때        |
+        | `public` | private → public 전환 |
+    - 특수 / 고급 이벤트
+        | 이벤트                   | 설명                      |
+        | --------------------- | ----------------------- |
+        | `workflow_call`       | 다른 워크플로에서 호출 (재사용 워크플로) |
+        | `repository_dispatch` | 외부 API 호출로 실행           |
+        | `check_run`           | GitHub Check 실행 결과      |
+        | `check_suite`         | Check 묶음 결과             |
+
 - 예시
     ```
     on:
