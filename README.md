@@ -840,44 +840,6 @@
         - release
         - issue 생성
         - schedule (cron)
-    - 코드 변경 관련
-        | 이벤트                   | 설명                               |
-        | --------------------- | -------------------------------- |
-        | `push`                | 커밋이 push될 때                      |
-        | `pull_request`        | PR 생성 / 수정 / 머지 시                |
-        | `pull_request_target` | PR 대상 브랜치 기준 실행 (fork PR, 보안 주의) |
-    - 수동 / 시간 기반 (자동화 핵심)
-        | 이벤트                 | 설명                |
-        | ------------------- | ----------------- |
-        | `workflow_dispatch` | 수동 실행 버튼 (입력값 가능) |
-        | `schedule`          | cron 기반 주기 실행     |
-    - 릴리즈 / 배포 관련
-        | 이벤트                 | 설명                      |
-        | ------------------- | ----------------------- |
-        | `release`           | GitHub Release 생성/수정/삭제 |
-        | `deployment`        | deployment 생성 시         |
-        | `deployment_status` | 배포 성공/실패 시              |
-    - 이슈 / 협업 관련
-        | 이벤트             | 설명                     |
-        | --------------- | ---------------------- |
-        | `issues`        | issue 열기/닫기/수정         |
-        | `issue_comment` | issue 또는 PR 댓글         |
-        | `discussion`    | GitHub Discussions 이벤트 |
-    - 저장소 / 설정 관련
-        | 이벤트      | 설명                  |
-        | -------- | ------------------- |
-        | `fork`   | repo fork 시         |
-        | `star`   | repo star 찍힐 때      |
-        | `watch`  | watch(구독)할 때        |
-        | `public` | private → public 전환 |
-    - 특수 / 고급 이벤트
-        | 이벤트                   | 설명                      |
-        | --------------------- | ----------------------- |
-        | `workflow_call`       | 다른 워크플로에서 호출 (재사용 워크플로) |
-        | `repository_dispatch` | 외부 API 호출로 실행           |
-        | `check_run`           | GitHub Check 실행 결과      |
-        | `check_suite`         | Check 묶음 결과             |
-
 - 예시
     ```
     on:
@@ -886,6 +848,164 @@
     ```
     - main 브랜치에 코드가 올라오면 자동으로 다음 단계 실행
 - 자동화의 출발 버튼
+
+### 이벤트 트리거
+- 워크플로를 실행 “시킬지 말지”를 결정
+- 이 단계에서 조건 불만족 → 워크플로 자체가 실행 안 됨
+- 코드 변경 관련
+    | 이벤트                   | 설명                               |
+    | --------------------- | -------------------------------- |
+    | `push`                | 커밋이 push될 때                      |
+    | `pull_request`        | PR 생성 / 수정 / 머지 시                |
+    | `pull_request_target` | PR 대상 브랜치 기준 실행 (fork PR, 보안 주의) |
+- 수동 / 시간 기반 (자동화 핵심)
+    | 이벤트                 | 설명                |
+    | ------------------- | ----------------- |
+    | `workflow_dispatch` | 수동 실행 버튼 (입력값 가능) |
+    | `schedule`          | cron 기반 주기 실행     |
+- 릴리즈 / 배포 관련
+    | 이벤트                 | 설명                      |
+    | ------------------- | ----------------------- |
+    | `release`           | GitHub Release 생성/수정/삭제 |
+    | `deployment`        | deployment 생성 시         |
+    | `deployment_status` | 배포 성공/실패 시              |
+- 이슈 / 협업 관련
+    | 이벤트             | 설명                     |
+    | --------------- | ---------------------- |
+    | `issues`        | issue 열기/닫기/수정         |
+    | `issue_comment` | issue 또는 PR 댓글         |
+    | `discussion`    | GitHub Discussions 이벤트 |
+- 저장소 / 설정 관련
+    | 이벤트      | 설명                  |
+    | -------- | ------------------- |
+    | `fork`   | repo fork 시         |
+    | `star`   | repo star 찍힐 때      |
+    | `watch`  | watch(구독)할 때        |
+    | `public` | private → public 전환 |
+- 특수 / 고급 이벤트
+    | 이벤트                   | 설명                      |
+    | --------------------- | ----------------------- |
+    | `workflow_call`       | 다른 워크플로에서 호출 (재사용 워크플로) |
+    | `repository_dispatch` | 외부 API 호출로 실행           |
+    | `check_run`           | GitHub Check 실행 결과      |
+    | `check_suite`         | Check 묶음 결과             |
+
+### 이벤트 필터링
+- 어떤 경우의 이벤트만 반응할지를 제한
+- 이벤트 필터링은 트리거의 하위 조건
+- 필터링 목적
+    - 불필요한 워크플로 실행 방지를 통해
+        - 실행 시간 절약
+        - Actions 사용량 절약
+        - 의도한 자동화만 실행
+- branches / branches-ignore
+    - 설명
+        | 옵션                | 설명           |
+        | ----------------- | ------------ |
+        | `branches`        | 특정 브랜치에서만 실행 |
+        | `branches-ignore` | 특정 브랜치 제외    |
+    - 사용 가능 이벤트
+        - push
+        - pull_request
+    - 예시
+        ```
+        on:
+            push:
+                branches: [main, develop]
+        ```
+- paths / paths-ignore
+    - 설명
+        | 옵션             | 설명                  |
+        | -------------- | ------------------- |
+        | `paths`        | 특정 파일/디렉토리 변경 시만 실행 |
+        | `paths-ignore` | 특정 경로 변경은 무시        |
+    - 사용 가능 이벤트
+        - push
+        - pull_request
+    - 예시
+        ```
+        on:
+            push:
+                paths:
+                    - "crawler/**"
+                    - "Dockerfile"
+        ```
+- types (이벤트 세부 동작 필터)
+    - 이벤트별 `types`
+        | 이벤트             | 자주 쓰는 `types`                     |
+        | --------------- | --------------------------------- |
+        | `pull_request`  | `opened`, `synchronize`, `closed` |
+        | `issues`        | `opened`, `edited`, `closed`      |
+        | `release`       | `published`, `created`            |
+        | `issue_comment` | `created`                         |
+    - 사용 가능 이벤트
+        - pull_request
+        - issues
+        - issue_comment
+        - release
+        - deployment
+    - 예시
+        ```
+        on:
+            pull_request:
+                types: [opened, synchronize]
+        ```
+- tags / tags-ignore
+    - 설명
+        | 옵션            | 설명              |
+        | ------------- | --------------- |
+        | `tags`        | 특정 태그 push 시 실행 |
+        | `tags-ignore` | 특정 태그 제외        |
+    - 사용 가능 이벤트
+        - push
+    - 예시
+        ```
+        on:
+            push:
+                tags:
+                  - "v*"
+        ```
+
+### 실행 제어 로직
+- 워크플로가 이미 시작된 뒤, 무엇을 실행할지 결정
+- schedule + cron 필터
+    - schedule은 필터링 불가
+        - branch / path 지정 불가
+    - 예시
+        ```
+        on:
+            schedule:
+                - cron: "0 */6 * * *"
+        ```
+    - 항상 default branch 기준 실행
+    - 조건 분기는 `if:`로 처리
+- workflow_dispatch.inputs 로 입력값 정의
+    - 이벤트 필터링이 아니지만 입력값을 제한
+- if: 조건
+    - 이벤트 필터로 부족하면 job / step 레벨에 `if:`
+    - 예시
+        ```
+        jobs:
+            crawl:
+                if: github.ref == 'refs/heads/main'
+        ```
+        ```
+        steps:
+            - name: Run crawler
+              if: github.event_name == 'schedule'
+        ```
+- matrix
+    - 실행 전략
+        - job 복제 전략
+- continue-on-error
+    - 실패 처리
+        - job 레벨
+        - step 레벨
+
+### ⭐조건/실행 우선순위
+1. 이벤트 필터터 (on + branches/paths/tags/typ)
+1. Job 단위 조건 (job.if)
+1. Step 단위 조건 (step.if)
 
 ## Job - 어떤 환경에서 무엇을 할 것인가?
 - Job 이란?
